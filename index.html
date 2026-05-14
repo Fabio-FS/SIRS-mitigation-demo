@@ -238,6 +238,8 @@
   }
 
   svg text { font-family: 'Inter', sans-serif; }
+
+  .handle-hit { touch-action: none; }
 </style>
 </head>
 
@@ -482,7 +484,10 @@
     for (let i = 0; i < nHandles; i++) {
       const x = tx(handleTimes[i]);
       const y = myMit(handleM[i]);
-      hStr += `<rect class="handle" data-idx="${i}" x="${x - 9}" y="${y - 9}" width="18" height="18" rx="3" fill="#262624" stroke="#4a9eff" stroke-width="2" style="cursor: ns-resize;"/>`;
+      hStr += `<g class="handle-hit" data-idx="${i}" style="cursor: ns-resize;">`;
+      hStr += `<rect x="${x - 18}" y="${y - 18}" width="36" height="36" fill="transparent"/>`;
+      hStr += `<rect x="${x - 9}" y="${y - 9}" width="18" height="18" rx="3" fill="#262624" stroke="#4a9eff" stroke-width="2" pointer-events="none"/>`;
+      hStr += `</g>`;
     }
     gHandles.innerHTML = hStr;
 
@@ -586,14 +591,12 @@
 
   function svgPoint(evt) {
     const rect = svg.getBoundingClientRect();
-    const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-    const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-    const x = ((clientX - rect.left) / rect.width) * W;
-    const y = ((clientY - rect.top) / rect.height) * H;
+    const x = ((evt.clientX - rect.left) / rect.width) * W;
+    const y = ((evt.clientY - rect.top) / rect.height) * H;
     return { x, y };
   }
 
-  function onMove(evt) {
+  function onPointerMove(evt) {
     if (dragIdx < 0) return;
     evt.preventDefault();
     const p = svgPoint(evt);
@@ -604,26 +607,23 @@
     redrawMain();
   }
 
-  function onUp() {
+  function onPointerUp(evt) {
     dragIdx = -1;
-    window.removeEventListener('mousemove', onMove);
-    window.removeEventListener('mouseup', onUp);
-    window.removeEventListener('touchmove', onMove);
-    window.removeEventListener('touchend', onUp);
+    if (evt.target.releasePointerCapture) {
+      try { evt.target.releasePointerCapture(evt.pointerId); } catch (e) {}
+    }
   }
 
   function attachHandleListeners() {
-    const handles = document.querySelectorAll('.handle');
+    const handles = document.querySelectorAll('.handle-hit');
     handles.forEach(h => {
-      h.addEventListener('mousedown', () => {
+      h.addEventListener('pointerdown', (evt) => {
+        evt.preventDefault();
         dragIdx = parseInt(h.getAttribute('data-idx'));
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-      });
-      h.addEventListener('touchstart', () => {
-        dragIdx = parseInt(h.getAttribute('data-idx'));
-        window.addEventListener('touchmove', onMove, { passive: false });
-        window.addEventListener('touchend', onUp);
+        h.setPointerCapture(evt.pointerId);
+        h.addEventListener('pointermove', onPointerMove);
+        h.addEventListener('pointerup', onPointerUp);
+        h.addEventListener('pointercancel', onPointerUp);
       });
     });
   }
