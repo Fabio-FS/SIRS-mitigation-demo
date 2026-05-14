@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Optimal pandemic mitigation: interactive demonstrator</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-page: #1c1c1a;
+    --bg-card: #262624;
+    --bg-panel: #2f2f2c;
+    --bg-input: #1c1c1a;
+    --text-primary: #f0eee6;
+    --text-secondary: #b3b1a8;
+    --text-tertiary: #8a8880;
+    --border: rgba(240, 238, 230, 0.12);
+    --border-strong: rgba(240, 238, 230, 0.22);
+    --accent-blue: #4a9eff;
+    --accent-orange: #e88a5f;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1rem 3rem;
+  }
+
+  header { margin-bottom: 1.5rem; }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .byline {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 1rem;
+  }
+
+  .intro {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .container {
+    background: var(--bg-card);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-top: 1rem;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+  }
+
+  .plot-panel {
+    background: var(--bg-panel);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+  }
+
+  label {
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  .panel-title {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    height: 18px;
+    width: 100%;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: var(--bg-input);
+    border-radius: 2px;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 4px;
+    background: var(--bg-input);
+    border-radius: 2px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    margin-top: -6px;
+    border: none;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    border: none;
+  }
+
+  button {
+    background: transparent;
+    border: 0.5px solid var(--border-strong);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--bg-panel); }
+  button:active { transform: scale(0.98); }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 21px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .total-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .total-label { font-size: 14px; color: var(--text-secondary); }
+  .total-value {
+    font-size: 24px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .slider-grid {
+    display: grid;
+    grid-template-columns: minmax(140px, auto) 1fr auto;
+    gap: 10px 14px;
+    align-items: center;
+  }
+  .slider-out {
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 36px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .preview-card {
+    background: var(--bg-panel);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0.6rem;
+  }
+  .preview-title {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .button-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .button-row button { flex: 1; }
+
+  .footer {
+    margin-top: 1.5rem;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.7;
+  }
+  .footer a { color: var(--accent-blue); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  .plot-caption {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  svg text { font-family: 'Inter', sans-serif; }
+</style>
+</head>
+
+<body>
+<div class="page">
+
+  <header>
+    <h1>Optimal pandemic mitigation</h1>
+    <p class="byline">Interactive demonstrator. Drag the blue handles, slide the cost exponents, watch the trade-off.</p>
+    <p class="intro">
+      A simple SIRS epidemic with adjustable mitigation. The infection cost is C<sub>I</sub> = I<sup>α</sup>, the mitigation cost is C<sub>M</sub> = M / (1 − M<sup>ζ</sup>), and the severity a sets their relative weight. The paper proves that for α ≤ 1 and ζ ≥ 1 the optimal mitigation is exactly all-or-nothing: M* ∈ {0, 1 − 1/R<sub>0</sub>}.
+    </p>
+  </header>
+
+  <div class="container">
+
+    <div class="panel" style="margin-bottom: 1rem;">
+      <div class="panel-title">Cost function shape</div>
+      <div class="slider-grid">
+        <label>α &nbsp;(C<sub>I</sub> = I<sup>α</sup>)</label>
+        <input type="range" id="slider-alpha" min="0.5" max="2" step="0.05" value="1"/>
+        <span id="out-alpha" class="slider-out">1.00</span>
+
+        <label>ζ &nbsp;(C<sub>M</sub> = M / (1 − M<sup>ζ</sup>))</label>
+        <input type="range" id="slider-zeta" min="0.1" max="10" step="0.1" value="1"/>
+        <span id="out-zeta" class="slider-out">1.00</span>
+
+        <label>a &nbsp;(severity)</label>
+        <input type="range" id="slider-a" min="0.5" max="50" step="0.5" value="10"/>
+        <span id="out-a" class="slider-out">10.0</span>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="panel">
+        <div class="stat-label">Total infections</div>
+        <div class="stat-value" id="stat-totinf">0.0</div>
+      </div>
+      <div class="panel">
+        <div class="stat-label">Avg mitigation</div>
+        <div class="stat-value" id="stat-avgmit">0.0</div>
+      </div>
+      <div class="panel">
+        <div class="stat-label">Mitigation cost</div>
+        <div class="stat-value" id="stat-costmit" style="color: var(--accent-blue);">0.0</div>
+      </div>
+      <div class="panel">
+        <div class="stat-label">Infection cost</div>
+        <div class="stat-value" id="stat-costinf" style="color: var(--accent-orange);">0.0</div>
+      </div>
+    </div>
+
+    <div class="panel total-row">
+      <div class="total-label">Total cost (daily avg)</div>
+      <div class="total-value" id="stat-tot">0.0</div>
+    </div>
+
+    <div class="plot-panel">
+      <div class="plot-caption">Drag the blue handles to set mitigation; orange curve is resulting infection prevalence</div>
+      <svg id="plot" viewBox="0 0 660 380" style="width: 100%; height: auto; display: block; touch-action: none;" xmlns="http://www.w3.org/2000/svg">
+        <g id="grid"></g>
+        <g id="axes"></g>
+        <path id="mit-curve" fill="none" stroke="#4a9eff" stroke-width="2.5"/>
+        <path id="inf-curve" fill="none" stroke="#e88a5f" stroke-width="2.5"/>
+        <g id="handles"></g>
+      </svg>
+    </div>
+
+    <div class="preview-grid">
+      <div class="preview-card">
+        <div class="preview-title">Infection cost a·C<sub>I</sub>(I)</div>
+        <svg id="preview-ci" viewBox="0 0 280 140" style="width: 100%; height: auto; display: block;" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="preview-card">
+        <div class="preview-title">Mitigation cost C<sub>M</sub>(M)</div>
+        <svg id="preview-cm" viewBox="0 0 280 140" style="width: 100%; height: auto; display: block;" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button id="btn-reset">Reset M to zero</button>
+      <button id="btn-optimal">Set M = 1 − 1/R₀</button>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    SIRS model. R<sub>0</sub> = 2, γ = 0.1/day, ν = 0.01/day, 360 days. Costs reported as daily averages in arbitrary units.<br>
+    Based on the paper <i>Optimal pandemic mitigation</i>.
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const R0 = 2.0;
+  const gamma = 0.1;
+  const nu = 0.01;
+  const T = 360;
+  const dt = 0.5;
+  const nSteps = Math.round(T / dt);
+
+  let alpha = 1.0;
+  let zeta = 1.0;
+  let aSev = 10.0;
+
+  const nHandles = 5;
+  const handleTimes = [];
+  for (let i = 0; i < nHandles; i++) handleTimes.push(i * T / (nHandles - 1));
+  const handleM = new Array(nHandles).fill(0.0);
+
+  const W = 660, H = 380;
+  const pad = { l: 50, r: 50, t: 25, b: 45 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+  const Imax = 0.15;
+
+  function tx(t) { return pad.l + (t / T) * plotW; }
+  function myMit(m) { return pad.t + (1 - m) * plotH; }
+  function myInf(I) { return pad.t + (1 - I / Imax) * plotH; }
+
+  function mitigationAt(t) {
+    if (t <= handleTimes[0]) return handleM[0];
+    if (t >= handleTimes[nHandles - 1]) return handleM[nHandles - 1];
+    for (let i = 0; i < nHandles - 1; i++) {
+      if (t >= handleTimes[i] && t <= handleTimes[i + 1]) {
+        const f = (t - handleTimes[i]) / (handleTimes[i + 1] - handleTimes[i]);
+        return handleM[i] * (1 - f) + handleM[i + 1] * f;
+      }
+    }
+    return 0;
+  }
+
+  function simulate() {
+    const I_arr = new Float64Array(nSteps + 1);
+    const M_arr = new Float64Array(nSteps + 1);
+    let S = 0.99, I = 0.01;
+    I_arr[0] = I;
+    M_arr[0] = mitigationAt(0);
+    for (let k = 0; k < nSteps; k++) {
+      const t = k * dt;
+      const M = mitigationAt(t);
+      const Reff = R0 * (1 - M);
+      const dS = -Reff * gamma * I * S + nu * (1 - S - I);
+      const dI = Reff * gamma * I * S - gamma * I;
+      S += dS * dt;
+      I += dI * dt;
+      I_arr[k + 1] = I;
+      M_arr[k + 1] = mitigationAt(t + dt);
+    }
+    return { I_arr, M_arr };
+  }
+
+  function infectionCost(I) { return Math.pow(I, alpha); }
+  function mitigationCost(M) {
+    const Mc = Math.min(M, 0.98);
+    const denom = 1 - Math.pow(Mc, zeta);
+    return Mc / denom;
+  }
+
+  function computeCosts(I_arr, M_arr) {
+    let totInf = 0, totCM = 0, totCI = 0, sumM = 0;
+    for (let k = 0; k < I_arr.length; k++) {
+      totInf += I_arr[k] * dt;
+      sumM += M_arr[k];
+      totCI += aSev * infectionCost(I_arr[k]) * dt;
+      totCM += mitigationCost(M_arr[k]) * dt;
+    }
+    return {
+      totInf,
+      avgM: sumM / M_arr.length,
+      costMit: totCM / T,
+      costInf: totCI / T,
+      total: (totCM + totCI) / T,
+    };
+  }
+
+  const svg = document.getElementById('plot');
+  const gAxes = document.getElementById('axes');
+  const gGrid = document.getElementById('grid');
+  const gHandles = document.getElementById('handles');
+  const mitPath = document.getElementById('mit-curve');
+  const infPath = document.getElementById('inf-curve');
+
+  function drawAxes() {
+    let gridStr = '';
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.t + (i / 4) * plotH;
+      gridStr += `<line x1="${pad.l}" y1="${y}" x2="${pad.l + plotW}" y2="${y}" stroke="rgba(240,238,230,0.12)" stroke-width="0.5"/>`;
+    }
+    gGrid.innerHTML = gridStr;
+
+    let s = '';
+    s += `<line x1="${pad.l}" y1="${pad.t + plotH}" x2="${pad.l + plotW}" y2="${pad.t + plotH}" stroke="#b3b1a8" stroke-width="1"/>`;
+    s += `<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t + plotH}" stroke="#b3b1a8" stroke-width="1"/>`;
+    s += `<line x1="${pad.l + plotW}" y1="${pad.t}" x2="${pad.l + plotW}" y2="${pad.t + plotH}" stroke="#b3b1a8" stroke-width="1"/>`;
+    for (let i = 0; i <= 4; i++) {
+      const m = i / 4;
+      const y = myMit(m);
+      s += `<text x="${pad.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#4a9eff">${m.toFixed(2)}</text>`;
+    }
+    for (let i = 0; i <= 4; i++) {
+      const I = (i / 4) * Imax;
+      const y = myInf(I);
+      s += `<text x="${pad.l + plotW + 8}" y="${y + 4}" text-anchor="start" font-size="11" fill="#e88a5f">${(I * 100).toFixed(1)}%</text>`;
+    }
+    for (let i = 0; i <= 6; i++) {
+      const t = (i / 6) * T;
+      const x = tx(t);
+      s += `<line x1="${x}" y1="${pad.t + plotH}" x2="${x}" y2="${pad.t + plotH + 4}" stroke="#b3b1a8" stroke-width="1"/>`;
+      s += `<text x="${x}" y="${pad.t + plotH + 18}" text-anchor="middle" font-size="11" fill="#b3b1a8">${Math.round(t)}</text>`;
+    }
+    s += `<text x="${pad.l + plotW / 2}" y="${H - 8}" text-anchor="middle" font-size="12" fill="#b3b1a8">time (days)</text>`;
+    s += `<text x="14" y="${pad.t + plotH / 2}" text-anchor="middle" font-size="12" fill="#4a9eff" transform="rotate(-90 14 ${pad.t + plotH / 2})">mitigation M</text>`;
+    s += `<text x="${W - 14}" y="${pad.t + plotH / 2}" text-anchor="middle" font-size="12" fill="#e88a5f" transform="rotate(90 ${W - 14} ${pad.t + plotH / 2})">infection I</text>`;
+    gAxes.innerHTML = s;
+  }
+
+  function buildPath(xs, ys) {
+    let d = '';
+    for (let i = 0; i < xs.length; i++) {
+      d += (i === 0 ? 'M' : 'L') + xs[i].toFixed(1) + ',' + ys[i].toFixed(1) + ' ';
+    }
+    return d;
+  }
+
+  function redrawMain() {
+    const mxs = handleTimes.map(tx);
+    const mys = handleM.map(myMit);
+    mitPath.setAttribute('d', buildPath(mxs, mys));
+
+    const sim = simulate();
+    const ixs = [], iys = [];
+    const stride = Math.max(1, Math.floor(sim.I_arr.length / 200));
+    for (let k = 0; k < sim.I_arr.length; k += stride) {
+      ixs.push(tx(k * dt));
+      iys.push(myInf(Math.min(sim.I_arr[k], Imax)));
+    }
+    infPath.setAttribute('d', buildPath(ixs, iys));
+
+    let hStr = '';
+    for (let i = 0; i < nHandles; i++) {
+      const x = tx(handleTimes[i]);
+      const y = myMit(handleM[i]);
+      hStr += `<rect class="handle" data-idx="${i}" x="${x - 9}" y="${y - 9}" width="18" height="18" rx="3" fill="#262624" stroke="#4a9eff" stroke-width="2" style="cursor: ns-resize;"/>`;
+    }
+    gHandles.innerHTML = hStr;
+
+    const c = computeCosts(sim.I_arr, sim.M_arr);
+    document.getElementById('stat-totinf').textContent = c.totInf.toFixed(2);
+    document.getElementById('stat-avgmit').textContent = c.avgM.toFixed(2);
+    document.getElementById('stat-costmit').textContent = c.costMit.toFixed(2);
+    document.getElementById('stat-costinf').textContent = c.costInf.toFixed(2);
+    document.getElementById('stat-tot').textContent = c.total.toFixed(2);
+
+    attachHandleListeners();
+  }
+
+  const previewCI = document.getElementById('preview-ci');
+  const previewCM = document.getElementById('preview-cm');
+
+  function drawPreviewCI() {
+    const w = 280, h = 140;
+    const px = { l: 30, r: 10, t: 10, b: 25 };
+    const pw = w - px.l - px.r;
+    const ph = h - px.t - px.b;
+
+    const nPts = 50;
+    const xs = [], ys = [];
+    let ymax = 0;
+    for (let i = 0; i <= nPts; i++) {
+      const I = (i / nPts) * Imax;
+      const y = aSev * Math.pow(I, alpha);
+      xs.push(I);
+      ys.push(y);
+      if (y > ymax) ymax = y;
+    }
+    if (ymax === 0) ymax = 1;
+
+    const xpix = I => px.l + (I / Imax) * pw;
+    const ypix = y => px.t + (1 - y / ymax) * ph;
+
+    let s = '';
+    s += `<line x1="${px.l}" y1="${px.t + ph}" x2="${px.l + pw}" y2="${px.t + ph}" stroke="#b3b1a8" stroke-width="0.5"/>`;
+    s += `<line x1="${px.l}" y1="${px.t}" x2="${px.l}" y2="${px.t + ph}" stroke="#b3b1a8" stroke-width="0.5"/>`;
+    s += `<text x="${px.l + pw / 2}" y="${h - 6}" text-anchor="middle" font-size="10" fill="#b3b1a8">I (prevalence)</text>`;
+    s += `<text x="${px.l - 4}" y="${px.t + 8}" text-anchor="end" font-size="10" fill="#b3b1a8">${ymax.toFixed(2)}</text>`;
+    s += `<text x="${px.l - 4}" y="${px.t + ph}" text-anchor="end" font-size="10" fill="#b3b1a8">0</text>`;
+    s += `<text x="${px.l + pw}" y="${px.t + ph + 12}" text-anchor="end" font-size="10" fill="#b3b1a8">${(Imax * 100).toFixed(0)}%</text>`;
+
+    let d = '';
+    for (let i = 0; i < xs.length; i++) {
+      d += (i === 0 ? 'M' : 'L') + xpix(xs[i]).toFixed(1) + ',' + ypix(ys[i]).toFixed(1) + ' ';
+    }
+    s += `<path d="${d}" fill="none" stroke="#e88a5f" stroke-width="2"/>`;
+    previewCI.innerHTML = s;
+  }
+
+  function drawPreviewCM() {
+    const w = 280, h = 140;
+    const px = { l: 30, r: 10, t: 10, b: 25 };
+    const pw = w - px.l - px.r;
+    const ph = h - px.t - px.b;
+
+    const Mmax = 0.95;
+    const nPts = 100;
+    const xs = [], ys = [];
+    let ymax = 0;
+    for (let i = 0; i <= nPts; i++) {
+      const M = (i / nPts) * Mmax;
+      const denom = 1 - Math.pow(M, zeta);
+      const y = M / denom;
+      xs.push(M);
+      ys.push(y);
+      if (y > ymax) ymax = y;
+    }
+    if (ymax > 20) ymax = 20;
+    if (ymax === 0) ymax = 1;
+
+    const xpix = M => px.l + (M / Mmax) * pw;
+    const ypix = y => px.t + (1 - Math.min(y, ymax) / ymax) * ph;
+
+    let s = '';
+    s += `<line x1="${px.l}" y1="${px.t + ph}" x2="${px.l + pw}" y2="${px.t + ph}" stroke="#b3b1a8" stroke-width="0.5"/>`;
+    s += `<line x1="${px.l}" y1="${px.t}" x2="${px.l}" y2="${px.t + ph}" stroke="#b3b1a8" stroke-width="0.5"/>`;
+    s += `<text x="${px.l + pw / 2}" y="${h - 6}" text-anchor="middle" font-size="10" fill="#b3b1a8">M (mitigation)</text>`;
+    s += `<text x="${px.l - 4}" y="${px.t + 8}" text-anchor="end" font-size="10" fill="#b3b1a8">${ymax.toFixed(1)}</text>`;
+    s += `<text x="${px.l - 4}" y="${px.t + ph}" text-anchor="end" font-size="10" fill="#b3b1a8">0</text>`;
+    s += `<text x="${px.l + pw}" y="${px.t + ph + 12}" text-anchor="end" font-size="10" fill="#b3b1a8">${Mmax.toFixed(2)}</text>`;
+
+    let d = '';
+    for (let i = 0; i < xs.length; i++) {
+      d += (i === 0 ? 'M' : 'L') + xpix(xs[i]).toFixed(1) + ',' + ypix(ys[i]).toFixed(1) + ' ';
+    }
+    s += `<path d="${d}" fill="none" stroke="#4a9eff" stroke-width="2"/>`;
+    previewCM.innerHTML = s;
+  }
+
+  function redrawAll() {
+    redrawMain();
+    drawPreviewCI();
+    drawPreviewCM();
+  }
+
+  let dragIdx = -1;
+
+  function svgPoint(evt) {
+    const rect = svg.getBoundingClientRect();
+    const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+    const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+    const x = ((clientX - rect.left) / rect.width) * W;
+    const y = ((clientY - rect.top) / rect.height) * H;
+    return { x, y };
+  }
+
+  function onMove(evt) {
+    if (dragIdx < 0) return;
+    evt.preventDefault();
+    const p = svgPoint(evt);
+    let m = 1 - (p.y - pad.t) / plotH;
+    if (m < 0) m = 0;
+    if (m > 0.98) m = 0.98;
+    handleM[dragIdx] = m;
+    redrawMain();
+  }
+
+  function onUp() {
+    dragIdx = -1;
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onUp);
+    window.removeEventListener('touchmove', onMove);
+    window.removeEventListener('touchend', onUp);
+  }
+
+  function attachHandleListeners() {
+    const handles = document.querySelectorAll('.handle');
+    handles.forEach(h => {
+      h.addEventListener('mousedown', () => {
+        dragIdx = parseInt(h.getAttribute('data-idx'));
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+      });
+      h.addEventListener('touchstart', () => {
+        dragIdx = parseInt(h.getAttribute('data-idx'));
+        window.addEventListener('touchmove', onMove, { passive: false });
+        window.addEventListener('touchend', onUp);
+      });
+    });
+  }
+
+  const sAlpha = document.getElementById('slider-alpha');
+  const sZeta = document.getElementById('slider-zeta');
+  const sA = document.getElementById('slider-a');
+  const outAlpha = document.getElementById('out-alpha');
+  const outZeta = document.getElementById('out-zeta');
+  const outA = document.getElementById('out-a');
+
+  sAlpha.addEventListener('input', () => {
+    alpha = parseFloat(sAlpha.value);
+    outAlpha.textContent = alpha.toFixed(2);
+    redrawAll();
+  });
+  sZeta.addEventListener('input', () => {
+    zeta = parseFloat(sZeta.value);
+    outZeta.textContent = zeta.toFixed(2);
+    redrawAll();
+  });
+  sA.addEventListener('input', () => {
+    aSev = parseFloat(sA.value);
+    outA.textContent = aSev.toFixed(1);
+    redrawAll();
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    for (let i = 0; i < nHandles; i++) handleM[i] = 0;
+    redrawMain();
+  });
+  document.getElementById('btn-optimal').addEventListener('click', () => {
+    const Mopt = 1 - 1 / R0;
+    for (let i = 0; i < nHandles; i++) handleM[i] = Mopt;
+    redrawMain();
+  });
+
+  drawAxes();
+  redrawAll();
+})();
+</script>
+
+</body>
+</html>
